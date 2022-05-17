@@ -1,4 +1,4 @@
-# actions
+# GitHub Actions
 
 Reusable workflows and other GitHub Actions things.
 
