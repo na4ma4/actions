@@ -2,6 +2,12 @@ name: "GoReleaser"
 
 on:
   workflow_call:
+    inputs:
+      docker:
+        required: false
+        default: false
+        description: "Enable docker login"
+        type: boolean
     secrets:
       token:
         required: true
@@ -35,6 +41,14 @@ jobs:
 
     - name: Set up go env
       run: export PATH=${PATH}:`go env GOPATH`/bin
+
+    - name: Docker Login
+      uses: docker/login-action@v1
+      if: ${{ inputs.docker }}
+      with:
+        registry: ghcr.io
+        username: ${{ github.repository_owner }}
+        password: ${{ secrets.GO_RELEASER_GITHUB_TOKEN }}
 
     - name: Run GoReleaser
       uses: goreleaser/goreleaser-action@v2
