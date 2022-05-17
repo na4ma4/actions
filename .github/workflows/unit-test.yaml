@@ -1,0 +1,44 @@
+name: "Unit Test"
+
+on:
+  workflow_call:
+
+jobs:
+  unittest:
+    name: "Unit Test"
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+
+    - name: Go Cache
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.cache/go-build
+          ~/go/pkg/mod
+          artifacts/bin
+        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-go-
+
+    - name: Set up Go
+      uses: actions/setup-go@v3
+      with:
+        go-version: ^1
+      id: go
+
+    - name: Set up go env
+      run: export PATH=${PATH}:`go env GOPATH`/bin
+
+    - name: Run golangci/golangci-lint
+      uses: golangci/golangci-lint-action@v3
+      with:
+        skip-cache: true
+        version: latest
+
+    - name: Run Unit Tests Target
+      run: make test
+
+    - name: Run CI Target
+      run: make ci
