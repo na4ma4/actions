@@ -43,8 +43,8 @@ jobs:
         password: ${{ secrets.token }}
 
     - name: Make Docker
-      run: |
-        make docker
+      if: ${{ ! inputs.docker-push }}
+      run: make docker
 
     - name: Make Docker Push
       if: ${{ inputs.docker-push }}
