@@ -1,0 +1,54 @@
+name: "Release"
+
+on:
+  workflow_call:
+    inputs:
+      platforms:
+        required: false
+        default: ""
+        description: "Comma separated list of platforms for docker buildx"
+        type: string
+      language:
+        required: false
+        type: string
+        default: golang
+
+jobs:
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    # if: startsWith(github.ref, 'refs/tags/v') && success()
+    
+    permissions:
+      contents: write
+      discussions: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set GO_MATRIX if platforms specified
+        if: ${{ inputs.platforms != '' }}
+        run: |
+          PLATFORM_LIST="${{ inputs.platforms }}"
+          echo "GO_MATRIX=${PLATFORM_LIST//,/ }" >> $GITHUB_ENV
+
+      - name: Set up Go
+        if: ${{ inputs.language == 'golang' }}
+        uses: actions/setup-go@v3
+        with:
+          go-version-file: 'go.mod'
+        id: go
+
+      - name: Build project
+        run: make archives
+        env:
+          GO_MATRIX: ${{ env.GO_MATRIX }}
+
+      - name: Upload Release Assets
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          files: |
+            artifacts/archives/*
