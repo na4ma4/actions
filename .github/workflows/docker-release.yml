@@ -9,7 +9,7 @@ on:
       latest:
         type: string
         default: auto
-        required: true
+        required: false
     secrets:
       docker_username:
         required: false
