@@ -39,9 +39,8 @@ jobs:
     - name: Docker Login (GitHub Container Registry)
       uses: docker/login-action@v2
       env:
-        GH_DOCKER_USERNAME: ${{ github. }}
         GH_DOCKER_PASSWORD: ${{ secrets.docker_github_token }}
-      if: ${{ (env.GH_DOCKER_USERNAME != '') && (env.GH_DOCKER_PASSWORD != '') }}
+      if: ${{ env.GH_DOCKER_PASSWORD != '' }}
       with:
         registry: ghcr.io
         username: ${{ github.repository_owner }}
