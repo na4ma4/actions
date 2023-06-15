@@ -83,5 +83,6 @@ jobs:
         context: ./
         file: ./Dockerfile
         push: true
+        platforms: ${{ inputs.platforms }}
         tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
