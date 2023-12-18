@@ -6,14 +6,62 @@ on:
       image:
         type: string
         required: true
+      context:
+        type: string
+        default: "./"
+        required: false
+      dockerfile:
+        type: string
+        default: "./Dockerfile"
+        required: false
       latest:
         type: string
-        default: auto
+        default: 'false'
+        required: false
+      force-latest:
+        type: boolean
+        default: false
+        required: false
+      latest-on-branch:
+        type: string
+        default: ""
+        required: false
+      tag-sha:
+        type: boolean
+        default: false
+        required: false
+      tag-date:
+        type: string
+        default: ""
+        required: false
+      build-args:
+        type: string
+        default: ""
+        required: false
+      manual-tag:
+        type: string
+        default: ""
+        required: false
+      make-targets:
+        type: string
+        default: ""
+        required: false
+      semver-tag:
+        type: boolean
+        default: true
+        description: "Add semver tag matching commit ref"
         required: false
       platforms:
         required: false
         default: "linux/amd64"
         description: "Comma separated list of platforms for docker buildx (eg. linux/amd64,linux/arm64)"
+        type: string
+      ref:
+        required: false
+        description: >
+          The branch, tag or SHA to checkout. When checking out the repository that
+          triggered a workflow, this defaults to the reference or SHA for that
+          event.  Otherwise, uses the default branch.
         type: string
     secrets:
       docker_username:
@@ -30,29 +78,84 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@v3
+      with:
+        ref: ${{ inputs.ref }}
 
-    - name: Docker metadata
+    - name: Run Make Targets
+      if: ${{ inputs.make-targets != '' }}
+      run: make ${{ inputs.make-targets }}
+      env:
+        DISABLE_FOSSA: true
+
+    - name: Create a date tag
+      if: ${{ inputs.tag-date != '' }}
+      id: date
+      env:
+        INPUT_TAGDATE: "${{ inputs.tag-date }}"
+      run: |
+        export TZ='Australia/Queensland'
+        echo "tag=$(date +"${INPUT_TAGDATE}")" | tee "${GITHUB_OUTPUT}"
+
+    - name: Manual Tag Config
+      id: manualmeta
+      uses: actions/github-script@v6
+      env:
+        INPUT_FORCE_LATEST: "${{ inputs.force-latest }}"
+        INPUT_SEMVER_TAG: "${{ inputs.semver-tag }}"
+        INPUT_MANUAL_TAG: "${{ inputs.manual-tag }}"
+        INPUT_LATEST_ON_BRANCH: "${{ inputs.latest-on-branch }}"
+        OUTPUT_DATETAG: "${{ steps.date.outputs.tag }}"
+      with:
+        script: |
+          const { INPUT_FORCE_LATEST, INPUT_SEMVER_TAG, INPUT_MANUAL_TAG, INPUT_LATEST_ON_BRANCH, OUTPUT_DATETAG } = process.env
+
+          output = []
+
+          if (INPUT_SEMVER_TAG == "true") {
+            output.push(`type=semver,pattern={{version}}`)
+          }
+
+          if (INPUT_FORCE_LATEST == "true") {
+            output.push(`type=raw,value=latest,enable=true`)
+          }
+
+          if (INPUT_MANUAL_TAG != "") {
+            output.push(`type=raw,value=${INPUT_MANUAL_TAG},enable=true`)
+          }
+
+          if (INPUT_LATEST_ON_BRANCH == "{{is_default_branch}}") {
+            output.push(`type=raw,value=latest,enable={{is_default_branch}}`)
+          } else if (INPUT_LATEST_ON_BRANCH == "refs/heads/${context.ref}") {
+            output.push(`type=raw,value=latest,enable=true`)
+          }
+
+          if (OUTPUT_DATETAG != "") {
+            output.push(`type=raw,value=${OUTPUT_DATETAG},enable=true`)
+          }
+
+          core.setOutput('config-tags', output.join("\n"))
+
+    - name: Docker meta
       id: meta
-      uses: docker/metadata-action@v4
+      uses: docker/metadata-action@v5
       with:
         images: |
           ${{ inputs.image }}
         flavor: |
           latest=${{ inputs.latest }}
         tags: |
-          type=sha
-          type=ref,event=branch
+          type=sha,enable=${{ inputs.tag-sha }}
           type=ref,event=pr
-          type=semver,pattern={{version}}
-          type=semver,pattern={{major}}.{{minor}}
-          type=raw,value=latest,enable={{is_default_branch}}
+          ${{ steps.manualmeta.outputs.config-tags }}
 
     - name: Set up QEMU
-      uses: docker/setup-qemu-action@v2
+      if: ${{ inputs.platforms != 'linux/amd64' }}
+      uses: docker/setup-qemu-action@v3
       with:
         platforms: ${{ inputs.platforms }}
 
     - name: Set up Docker Buildx
+      if: ${{ inputs.platforms != 'linux/amd64' }}
       uses: docker/setup-buildx-action@v2
       with:
         platforms: ${{ inputs.platforms }}
@@ -78,11 +181,20 @@ jobs:
         password: ${{ secrets.docker_github_token }}
 
     - name: Build and Push Docker image
-      uses: docker/build-push-action@v3
+      if: ${{ steps.meta.outputs.tags != '' }}
+      uses: docker/build-push-action@v5
       with:
-        context: ./
-        file: ./Dockerfile
+        context: ${{ inputs.context }}
+        file: ${{ inputs.dockerfile }}
         push: true
-        platforms: ${{ inputs.platforms }}
         tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
+        build-args: ${{ inputs.build-args }}
+        platforms: ${{ inputs.platforms }}
+
+    - name: Adding Docker Image Markdown Summary
+      if: ${{ steps.meta.outputs.tags != '' }}
+      run: |
+        echo "### Docker Image Deployed to Registry 🚀" >> "${GITHUB_STEP_SUMMARY}"
+        echo "" >> "${GITHUB_STEP_SUMMARY}"
+        echo "${{ steps.meta.outputs.tags }}" >> "${GITHUB_STEP_SUMMARY}"
