@@ -2,6 +2,15 @@ name: "Unit Test"
 
 on:
   workflow_call:
+    inputs:
+      enable-codecov:
+        required: false
+        default: false
+        description: "Enable codecov reports"
+        type: boolean
+    secrets:
+      codecov_token:
+        required: false
 
 jobs:
   unit-test:
@@ -42,3 +51,10 @@ jobs:
 
     - name: Run CI Target
       run: make ci
+
+    - name: Publish Unit Test Coverage
+      if: ${{ inputs.enable-codecov }}
+      uses: codecov/codecov-action@v3
+      with:
+        fail_ci_if_error: true
+        verbose: true
