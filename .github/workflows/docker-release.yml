@@ -46,6 +46,10 @@ on:
         type: string
         default: ""
         required: false
+      branches:
+        type: string
+        default: ""
+        required: false
       semver-tag:
         type: boolean
         default: true
@@ -104,10 +108,11 @@ jobs:
         INPUT_SEMVER_TAG: "${{ inputs.semver-tag }}"
         INPUT_MANUAL_TAG: "${{ inputs.manual-tag }}"
         INPUT_LATEST_ON_BRANCH: "${{ inputs.latest-on-branch }}"
+        INPUT_BRANCHES: "${{ inputs.branches }}"
         OUTPUT_DATETAG: "${{ steps.date.outputs.tag }}"
       with:
         script: |
-          const { INPUT_FORCE_LATEST, INPUT_SEMVER_TAG, INPUT_MANUAL_TAG, INPUT_LATEST_ON_BRANCH, OUTPUT_DATETAG } = process.env
+          const { INPUT_FORCE_LATEST, INPUT_SEMVER_TAG, INPUT_MANUAL_TAG, INPUT_LATEST_ON_BRANCH, INPUT_BRANCHES, OUTPUT_DATETAG } = process.env
 
           output = []
 
@@ -125,9 +130,16 @@ jobs:
 
           if (INPUT_LATEST_ON_BRANCH == "{{is_default_branch}}") {
             output.push(`type=raw,value=latest,enable={{is_default_branch}}`)
-          } else if (INPUT_LATEST_ON_BRANCH == "refs/heads/${context.ref}") {
+          } else if (INPUT_LATEST_ON_BRANCH == `refs/heads/${context.ref}`) {
             output.push(`type=raw,value=latest,enable=true`)
           }
+
+          tagBranches = INPUT_BRANCHES.split(',')
+          tagBranches.forEach((branch) => {
+            if (context.ref == `refs/heads/${branch}`) {
+              output.push(`type=raw,value=${branch},enable=true`)
+            }
+          })
 
           if (OUTPUT_DATETAG != "") {
             output.push(`type=raw,value=${OUTPUT_DATETAG},enable=true`)
