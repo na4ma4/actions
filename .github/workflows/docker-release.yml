@@ -77,7 +77,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         ref: ${{ inputs.ref }}
 
@@ -98,7 +98,7 @@ jobs:
 
     - name: Manual Tag Config
       id: manualmeta
-      uses: actions/github-script@v6
+      uses: actions/github-script@v7
       env:
         INPUT_FORCE_LATEST: "${{ inputs.force-latest }}"
         INPUT_SEMVER_TAG: "${{ inputs.semver-tag }}"
@@ -156,12 +156,12 @@ jobs:
 
     - name: Set up Docker Buildx
       if: ${{ inputs.platforms != 'linux/amd64' }}
-      uses: docker/setup-buildx-action@v2
+      uses: docker/setup-buildx-action@v3
       with:
         platforms: ${{ inputs.platforms }}
 
     - name: Docker Login (Docker Hub)
-      uses: docker/login-action@v2
+      uses: docker/login-action@v3
       env:
         GH_DOCKER_USERNAME: ${{ secrets.docker_username }}
         GH_DOCKER_PASSWORD: ${{ secrets.docker_password }}
@@ -171,7 +171,7 @@ jobs:
         password: ${{ secrets.docker_password }}
 
     - name: Docker Login (GitHub Container Registry)
-      uses: docker/login-action@v2
+      uses: docker/login-action@v3
       env:
         GH_DOCKER_PASSWORD: ${{ secrets.docker_github_token }}
       if: ${{ env.GH_DOCKER_PASSWORD != '' }}

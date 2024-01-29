@@ -25,7 +25,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Set GO_MATRIX if platforms specified
         if: ${{ inputs.platforms != '' }}
@@ -35,7 +35,7 @@ jobs:
 
       - name: Set up Go
         if: ${{ inputs.language == 'golang' }}
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@v5
         with:
           go-version-file: 'go.mod'
         id: go
