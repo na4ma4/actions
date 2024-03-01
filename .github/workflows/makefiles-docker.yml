@@ -14,7 +14,7 @@ on:
         description: "Comma separated list of platforms for docker buildx"
         type: string
     secrets:
-      token:
+      DOCKER_GITHUB_TOKEN:
         required: true
 
 jobs:
@@ -40,7 +40,7 @@ jobs:
       with:
         registry: ghcr.io
         username: ${{ github.repository_owner }}
-        password: ${{ secrets.token }}
+        password: ${{ secrets.DOCKER_GITHUB_TOKEN }}
 
     - name: Make Docker
       if: ${{ ! inputs.docker-push }}

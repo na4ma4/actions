@@ -9,7 +9,7 @@ on:
         description: "Enable codecov reports"
         type: boolean
     secrets:
-      codecov_token:
+      CODECOV_TOKEN:
         required: false
 
 jobs:

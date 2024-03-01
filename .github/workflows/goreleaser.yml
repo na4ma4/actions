@@ -9,7 +9,7 @@ on:
         description: "Enable docker login"
         type: boolean
     secrets:
-      token:
+      GO_RELEASER_GITHUB_TOKEN:
         required: true
 
 jobs:
@@ -48,7 +48,7 @@ jobs:
       with:
         registry: ghcr.io
         username: ${{ github.repository_owner }}
-        password: ${{ secrets.token }}
+        password: ${{ secrets.GO_RELEASER_GITHUB_TOKEN }}
 
     - name: Run GoReleaser
       uses: goreleaser/goreleaser-action@v5
@@ -56,4 +56,4 @@ jobs:
         version: latest
         args: release --rm-dist
       env:
-        GITHUB_TOKEN: ${{ secrets.token }}
+        GITHUB_TOKEN: ${{ secrets.GO_RELEASER_GITHUB_TOKEN }}

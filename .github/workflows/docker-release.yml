@@ -68,11 +68,11 @@ on:
           event.  Otherwise, uses the default branch.
         type: string
     secrets:
-      docker_username:
+      DOCKER_USERNAME:
         required: false
-      docker_password:
+      DOCKER_PASSWORD:
         required: false
-      docker_github_token:
+      DOCKER_GITHUB_TOKEN:
         required: false
 
 jobs:
@@ -175,22 +175,22 @@ jobs:
     - name: Docker Login (Docker Hub)
       uses: docker/login-action@v3
       env:
-        GH_DOCKER_USERNAME: ${{ secrets.docker_username }}
-        GH_DOCKER_PASSWORD: ${{ secrets.docker_password }}
+        GH_DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+        GH_DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
       if: ${{ (env.GH_DOCKER_USERNAME != '') && (env.GH_DOCKER_PASSWORD != '') }}
       with:
-        username: ${{ secrets.docker_username }}
-        password: ${{ secrets.docker_password }}
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
 
     - name: Docker Login (GitHub Container Registry)
       uses: docker/login-action@v3
       env:
-        GH_DOCKER_PASSWORD: ${{ secrets.docker_github_token }}
+        GH_DOCKER_PASSWORD: ${{ secrets.DOCKER_GITHUB_TOKEN }}
       if: ${{ env.GH_DOCKER_PASSWORD != '' }}
       with:
         registry: ghcr.io
         username: ${{ github.repository_owner }}
-        password: ${{ secrets.docker_github_token }}
+        password: ${{ secrets.DOCKER_GITHUB_TOKEN }}
 
     - name: Build and Push Docker image
       if: ${{ steps.meta.outputs.tags != '' }}
