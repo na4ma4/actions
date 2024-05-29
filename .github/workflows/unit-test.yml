@@ -21,6 +21,7 @@ jobs:
       uses: actions/checkout@v4
 
     - name: Go Cache
+      if: ${{ hashFiles('go.mod') != '' }}
       uses: actions/cache@v4
       with:
         path: |
@@ -32,6 +33,7 @@ jobs:
           ${{ runner.os }}-go-
 
     - name: Set up Go
+      if: ${{ hashFiles('go.mod') != '' }}
       uses: actions/setup-go@v5
       with:
         go-version: ^1
@@ -41,16 +43,23 @@ jobs:
       run: export PATH=${PATH}:`go env GOPATH`/bin
 
     - name: Run golangci/golangci-lint
+      if: ${{ hashFiles('go.mod') != '' }}
       uses: golangci/golangci-lint-action@v4
       with:
         skip-cache: true
         version: latest
 
     - name: Run Unit Tests Target
+      if: ${{ hashFiles('Makefile') != '' }}
       run: make test
 
     - name: Run CI Target
+      if: ${{ hashFiles('Makefile') != '' }}
       run: make ci
+
+    - name: Run Mage
+      if: ${{ hashFiles('magefiles/*') != '' }}
+      run: mage
 
     - name: Publish Unit Test Coverage
       if: ${{ inputs.enable-codecov }}
