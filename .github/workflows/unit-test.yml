@@ -8,6 +8,21 @@ on:
         default: false
         description: "Enable codecov reports"
         type: boolean
+      runs-on:
+        required: false
+        default: "ubuntu-latest"
+        description: "Runner label for jobs"
+        type: string
+      golangci-args:
+        required: false
+        default: --timeout=10m
+        description: "golangci-lint arguments"
+        type: string
+      platforms:
+        required: false
+        default: "linux/amd64"
+        description: "Comma separated list of platforms for docker buildx (eg. linux/amd64,linux/arm64)"
+        type: string
     secrets:
       CODECOV_TOKEN:
         required: false
@@ -15,7 +30,7 @@ on:
 jobs:
   unit-test:
     name: "Unit Test"
-    runs-on: ubuntu-latest
+    runs-on: ${{ inputs.runs-on }}
     steps:
     - name: Checkout
       uses: actions/checkout@v4
@@ -32,6 +47,18 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-go-
 
+    - name: Set up QEMU
+      if: ${{ inputs.platforms != 'linux/amd64' }}
+      uses: docker/setup-qemu-action@v3
+      with:
+        platforms: ${{ inputs.platforms }}
+
+    - name: Set up Docker Buildx
+      if: ${{ inputs.platforms != 'linux/amd64' }}
+      uses: docker/setup-buildx-action@v3
+      with:
+        platforms: ${{ inputs.platforms }}
+
     - name: Set up Go
       if: ${{ hashFiles('go.mod') != '' }}
       uses: actions/setup-go@v5
@@ -43,11 +70,12 @@ jobs:
       run: export PATH=${PATH}:`go env GOPATH`/bin
 
     - name: Run golangci/golangci-lint
-      if: ${{ hashFiles('go.mod') != '' }}
+      if: ${{ hashFiles('.golangci.yml') != '' }}
       uses: golangci/golangci-lint-action@v6
       with:
         skip-cache: true
-        version: latest
+        args: ${{ inputs.golangci-args }}
+        # version: v1.52
 
     - name: Run Unit Tests Target
       if: ${{ hashFiles('Makefile') != '' }}
