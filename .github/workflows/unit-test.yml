@@ -8,6 +8,11 @@ on:
         default: false
         description: "Enable codecov reports"
         type: boolean
+      enable-fossa:
+        required: false
+        default: false
+        description: "Enable fossa reports"
+        type: boolean
       runs-on:
         required: false
         default: "ubuntu-latest"
@@ -25,6 +30,8 @@ on:
         type: string
     secrets:
       CODECOV_TOKEN:
+        required: false
+      FOSSA_API_KEY:
         required: false
 
 jobs:
@@ -99,3 +106,26 @@ jobs:
         verbose: true
       env:
         CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+    - name: Publish License Scan
+      if: ${{ inputs.enable-fossa }}
+      id: fossa
+      uses: fossas/fossa-action@main
+      with:
+        api-key: ${{ secrets.FOSSA_API_KEY }}
+        run-tests: true
+        generate-report: html
+
+    - name: Export License Scan
+      if: ${{ inputs.enable-fossa }}
+      run: |
+        mkdir -p artifacts
+        echo '${{ steps.fossa.outputs.report }}' > artifacts/fossa-report.html
+
+    - name: Store License Scan as Artifact
+      if: ${{ inputs.enable-fossa }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: 'fossa-report'
+        path: artifacts/fossa-report.html
+        compression-level: 9
