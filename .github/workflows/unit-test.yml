@@ -114,18 +114,18 @@ jobs:
       with:
         api-key: ${{ secrets.FOSSA_API_KEY }}
         run-tests: true
-        generate-report: html
+        # generate-report: html
 
-    - name: Export License Scan
-      if: ${{ inputs.enable-fossa }}
-      run: |
-        mkdir -p artifacts
-        echo '${{ steps.fossa.outputs.report }}' > artifacts/fossa-report.html
+    # - name: Export License Scan
+    #   if: ${{ inputs.enable-fossa }}
+    #   run: |
+    #     mkdir -p artifacts
+    #     echo '${{ steps.fossa.outputs.report }}' > artifacts/fossa-report.html
 
-    - name: Store License Scan as Artifact
-      if: ${{ inputs.enable-fossa }}
-      uses: actions/upload-artifact@v4
-      with:
-        name: 'fossa-report'
-        path: artifacts/fossa-report.html
-        compression-level: 9
+    # - name: Store License Scan as Artifact
+    #   if: ${{ inputs.enable-fossa }}
+    #   uses: actions/upload-artifact@v4
+    #   with:
+    #     name: 'fossa-report'
+    #     path: artifacts/fossa-report.html
+    #     compression-level: 9
