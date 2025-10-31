@@ -18,6 +18,21 @@ on:
         default: "dpkg-files"
         description: "dpkg artifact name"
         type: string
+      config-file:
+        required: false
+        default: ".goreleaser.yml"
+        description: "Goreleaser configuration file"
+        type: string
+      cross-compile:
+        required: false
+        default: false
+        description: "Enable osx cross-compiling"
+        type: boolean
+      runs-on:
+        required: false
+        default: "ubuntu-latest"
+        description: "runs on platform"
+        type: string
     secrets:
       DOCKER_USERNAME:
         required: false
@@ -38,6 +53,15 @@ jobs:
       with:
         fetch-depth: 0
 
+    - name: Checkout osxcross
+      if: ${{ inputs.cross-compile }}
+      uses: actions/checkout@v4
+      with:
+        repository: 'tpoechtrager/osxcross'
+        github-server-url: 'https://github.com'
+        path: 'artifacts/osxcross'
+        token: ${{ secrets.CWX_GH_TOKEN }}
+
     - name: Set up Go
       if: ${{ hashFiles('go.mod') != '' }}
       uses: actions/setup-go@v5
@@ -45,6 +69,24 @@ jobs:
         cache: false
         go-version: ^1
       id: go
+
+    - name: Build osxcross
+      if: ${{ inputs.cross-compile }}
+      env:
+        UNATTENDED: "1"
+        SDK_VERSION: "14.2"
+        CLANG_VERSION: "16.0.0"
+        ENABLE_CLANG_INSTALL: "1"
+        INSTALLPREFIX: "/usr"
+      run: |
+        sudo apt-get install gcc-multilib g++-multilib
+        curl -sSL https://cmake.org/files/v3.14/cmake-3.14.5-Linux-x86_64.tar.gz | sudo tar -xzC /opt
+        echo "/opt/cmake-3.14.5-Linux-x86_64/bin" >> ${GITHUB_PATH}
+        export PATH=/opt/cmake-3.14.5-Linux-x86_64/bin:$PATH
+        cd artifacts/osxcross
+        ./build_apple_clang.sh
+        ./build.sh
+        ./build_compiler_rt.sh
 
     - name: Set up go env
       if: ${{ hashFiles('go.mod') != '' }}
@@ -71,10 +113,16 @@ jobs:
         password: ${{ secrets.DOCKER_GITHUB_TOKEN }}
 
     - name: Install Mage
-      if: ${{ hashFiles('magefiles/*') != '' }}
+      if: ${{ hashFiles('magefiles/*') != '' && (!startsWith(inputs.runs-on, 'macos-latest')) }}
       uses: magefile/mage-action@v3
       with:
         install-only: true
+      
+    - name: Install and Run Mage (macOS)
+      if: ${{ hashFiles('magefiles/*') != '' && (startsWith(inputs.runs-on, 'macos-latest')) }}
+      run: |
+        brew install --force mage
+        mage
 
     - name: Run CI Target
       if: ${{ hashFiles('Makefile') != '' }}
