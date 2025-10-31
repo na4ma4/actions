@@ -3,6 +3,10 @@ name: "Unit Test"
 on:
   workflow_call:
     inputs:
+      binary-name:
+        required: false
+        description: "Binary name"
+        type: string
       enable-codecov:
         required: false
         default: false
@@ -92,11 +96,33 @@ jobs:
       if: ${{ hashFiles('Makefile') != '' }}
       run: make ci
 
-    - name: Run Mage
-      if: ${{ hashFiles('magefiles/*') != '' }}
+    - name: Install and Run Mage (macOS)
+      if: ${{ hashFiles('magefiles/*') != '' && (startsWith(inputs.runs-on, 'macos-latest')) }}
+      run: |
+        brew install --force mage
+        mage
+
+    - name: Run Mage (not macOS)
+      if: ${{ hashFiles('magefiles/*') != '' && (!startsWith(inputs.runs-on, 'macos-latest')) }}
       uses: magefile/mage-action@v3
       with:
         version: latest
+
+    - name: Make Binary Target
+      if: ${{ hashFiles('Makefile') != '' && inputs.binary-name }}
+      run: make artifacts/build/release/linux/amd64/${{ inputs.binary-name }}
+
+    - name: Mage Binary Target (macOS)
+      if: ${{ hashFiles('magefiles/*') != '' && inputs.binary-name && (startsWith(inputs.runs-on, 'macos-latest')) }}
+      run: |
+        mage build:releaseCommand ${{ inputs.binary-name }}
+
+    - name: Mage Binary Target (not macOS)
+      if: ${{ hashFiles('magefiles/*') != '' && inputs.binary-name && (!startsWith(inputs.runs-on, 'macos-latest')) }}
+      uses: magefile/mage-action@v3
+      with:
+        version: latest
+        args: build:releaseCommand ${{ inputs.binary-name }}
 
     - name: Publish Unit Test Coverage
       if: ${{ inputs.enable-codecov }}
