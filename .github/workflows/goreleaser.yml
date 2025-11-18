@@ -132,7 +132,7 @@ jobs:
       uses: goreleaser/goreleaser-action@v6
       with:
         version: latest
-        args: release --clean
+        args: release --config "${{ inputs.config-file }}" --clean
       env:
         GOVERSION_NR: ${{ steps.go.outputs.go-version }}
         GITHUB_TOKEN: ${{ secrets.GO_RELEASER_GITHUB_TOKEN }}
