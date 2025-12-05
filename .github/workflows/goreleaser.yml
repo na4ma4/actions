@@ -64,7 +64,7 @@ jobs:
 
     - name: Set up Go
       if: ${{ hashFiles('go.mod') != '' }}
-      uses: actions/setup-go@v5
+      uses: actions/setup-go@v6
       with:
         cache: false
         go-version: ^1

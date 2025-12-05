@@ -44,19 +44,19 @@ jobs:
     runs-on: ${{ inputs.runs-on }}
     steps:
     - name: Checkout
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
 
-    - name: Go Cache
-      if: ${{ hashFiles('go.mod') != '' }}
-      uses: actions/cache@v4
-      with:
-        path: |
-          ~/.cache/go-build
-          ~/go/pkg/mod
-          artifacts/bin
-        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-        restore-keys: |
-          ${{ runner.os }}-go-
+    # - name: Go Cache
+    #   if: ${{ hashFiles('go.mod') != '' }}
+    #   uses: actions/cache@v4
+    #   with:
+    #     path: |
+    #       ~/.cache/go-build
+    #       ~/go/pkg/mod
+    #       artifacts/bin
+    #     key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+    #     restore-keys: |
+    #       ${{ runner.os }}-go-
 
     - name: Set up QEMU
       if: ${{ inputs.platforms != 'linux/amd64' }}
@@ -72,9 +72,10 @@ jobs:
 
     - name: Set up Go
       if: ${{ hashFiles('go.mod') != '' }}
-      uses: actions/setup-go@v5
+      uses: actions/setup-go@v6
       with:
-        go-version: ^1
+        go-version: stable
+        cache-dependency-path: "**/*.sum"
       id: go
 
     - name: Set up go env
