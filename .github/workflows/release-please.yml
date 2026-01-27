@@ -96,10 +96,10 @@ jobs:
 
       - name: Generate Homebrew Cask
         if: ${{ inputs.homebrew-repo != '' }}
+        id: generate_homebrew_cask
         run: |
           echo "Version: ${VERSION}"
-          VERSION=${VERSION} .github/scripts/generate_homebrew_cask.sh
-          mv ./ssh-agent-mux.rb ./homebrew-tap/Casks/ssh-agent-mux.rb
+          VERSION=${VERSION} .github/scripts/generate_homebrew_cask.sh ./homebrew-tap/Casks/
       
       - name: Commit and Push Homebrew Tap
         if: ${{ inputs.homebrew-repo != '' }}
@@ -107,6 +107,6 @@ jobs:
           cd homebrew-tap
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add Casks/ssh-agent-mux.rb
-          git commit -m "ssh-agent-mux ${VERSION}"
+          git add Casks/*.rb
+          git commit -m "${{ steps.generate_homebrew_cask.outputs.target_name || 'unnamed cask' }} ${VERSION}"
           git push origin main
