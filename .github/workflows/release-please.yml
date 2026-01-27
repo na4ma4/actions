@@ -1,0 +1,112 @@
+on:
+  workflow_call:
+    inputs:
+      platforms:
+        required: false
+        default: "linux/amd64,linux/arm64,darwin/amd64,darwin/arm64,windows/amd64,windows/arm64"
+        description: "Comma separated list of platforms for docker buildx"
+        type: string
+      homebrew-repo:
+        required: false
+        type: string
+        default: ""
+      artifacts:
+        required: false
+        type: boolean
+        default: false
+    secrets:
+      GOPRIVATE:
+        required: false
+        description: "GOPRIVATE environment variable for private Go modules"
+      RELEASE_PLEASE_TOKEN:
+        required: true
+        description: "Token for release-please to create releases"
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
+name: release-please
+
+env:
+  PLATFORMS: ${{ inputs.platforms }}
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    outputs:
+      release_created: ${{ steps.release-please.outputs.release_created }}
+      tag_name: ${{ steps.release-please.outputs.tag_name }}
+      version: ${{ steps.release-please.outputs.version }}
+    steps:
+      - name: Release Please
+        id: release-please
+        uses: googleapis/release-please-action@v4
+        with:
+          token: ${{ secrets.RELEASE_PLEASE_TOKEN }}
+
+  release-artifacts:
+    runs-on: ubuntu-latest
+    needs: release-please
+    if: ${{ needs.release-please.outputs.release_created && inputs.artifacts }}
+    env:
+      GOPRIVATE: ${{ secrets.GOPRIVATE }}
+      VERSION: ${{ needs.release-please.outputs.version }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version: ^1
+          cache: true
+        id: go
+
+      - name: Set up go env
+        run: |
+          echo "$(go env GOPATH)/bin" >> "${GITHUB_PATH}"
+
+      - name: Configure git for private modules
+        run: git config --global url."https://user:${{ secrets.RELEASE_PLEASE_TOKEN }}@github.com".insteadOf "https://github.com"
+
+      - name: Run Mage
+        uses: magefile/mage-action@v3
+        env:
+          GITHUB_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN }}
+        with:
+          version: latest
+          args: build:archive
+
+      - name: Upload Release Artifact
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release upload ${{ needs.release-please.outputs.tag_name }} ./artifacts/archives/* --clobber
+
+      - name: Checkout Homebrew Tap
+        if: ${{ inputs.homebrew-repo != '' }}
+        uses: actions/checkout@v6
+        with:
+          repository: ${{ inputs.homebrew-repo }}
+          path: homebrew-tap
+          token: ${{ secrets.RELEASE_PLEASE_TOKEN }}
+
+      - name: Generate Homebrew Cask
+        if: ${{ inputs.homebrew-repo != '' }}
+        run: |
+          echo "Version: ${VERSION}"
+          VERSION=${VERSION} .github/scripts/generate_homebrew_cask.sh
+          mv ./ssh-agent-mux.rb ./homebrew-tap/Casks/ssh-agent-mux.rb
+      
+      - name: Commit and Push Homebrew Tap
+        if: ${{ inputs.homebrew-repo != '' }}
+        run: |
+          cd homebrew-tap
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add Casks/ssh-agent-mux.rb
+          git commit -m "ssh-agent-mux ${VERSION}"
+          git push origin main
