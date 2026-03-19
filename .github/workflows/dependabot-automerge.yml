@@ -2,6 +2,12 @@ name: Dependabot Automatic Merge
 
 on:
   workflow_call:
+    inputs:
+      merge-type:
+        type: string
+        description: 'The type of merge to perform (e.g., "squash", "rebase", "merge").'
+        required: false
+        default: 'merge'
 
 permissions:
   contents: write
@@ -20,7 +26,24 @@ jobs:
 
       - name: Enable auto-merge for Dependabot PRs (${{ steps.metadata.outputs.update-type }})
         if: ${{steps.metadata.outputs.update-type != 'version-update:semver-major'}}
-        run: gh pr merge --auto --merge "$PR_URL"
         env:
           PR_URL: ${{github.event.pull_request.html_url}}
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+          MERGE_TYPE: ${{ inputs.merge-type }}
+        run: |
+          case "${MERGE_TYPE}" in
+            "squash")
+              MERGE_OPT="--squash"
+              ;;
+            "rebase")
+              MERGE_OPT="--rebase"
+              ;;
+            "merge")
+              MERGE_OPT="--merge"
+              ;;
+            *)
+              echo "Invalid merge type: ${MERGE_TYPE}. Defaulting to 'merge'."
+              MERGE_OPT="--merge"
+              ;;
+          esac
+          gh pr merge --auto "${MERGE_OPT}" "${PR_URL}"
