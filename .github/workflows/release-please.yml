@@ -74,7 +74,7 @@ jobs:
         run: git config --global url."https://user:${{ secrets.RELEASE_PLEASE_TOKEN }}@github.com".insteadOf "https://github.com"
 
       - name: Run Mage
-        uses: magefile/mage-action@v3
+        uses: magefile/mage-action@v4
         env:
           GITHUB_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN }}
         with:

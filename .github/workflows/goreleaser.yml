@@ -114,7 +114,7 @@ jobs:
 
     - name: Install Mage
       if: ${{ hashFiles('magefiles/*') != '' && (!startsWith(inputs.runs-on, 'macos-latest')) }}
-      uses: magefile/mage-action@v3
+      uses: magefile/mage-action@v4
       with:
         install-only: true
       
