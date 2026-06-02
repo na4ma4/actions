@@ -105,7 +105,7 @@ jobs:
 
     - name: Run Mage (not macOS)
       if: ${{ hashFiles('magefiles/*') != '' && (!startsWith(inputs.runs-on, 'macos-latest')) }}
-      uses: magefile/mage-action@v3
+      uses: magefile/mage-action@v4
       with:
         version: latest
 
@@ -120,7 +120,7 @@ jobs:
 
     - name: Mage Binary Target (not macOS)
       if: ${{ hashFiles('magefiles/*') != '' && inputs.binary-name && (!startsWith(inputs.runs-on, 'macos-latest')) }}
-      uses: magefile/mage-action@v3
+      uses: magefile/mage-action@v4
       with:
         version: latest
         args: build:releaseCommand ${{ inputs.binary-name }}

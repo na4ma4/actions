@@ -134,7 +134,7 @@ jobs:
 
     - name: Run Mage Targets
       if: ${{ hashFiles('magefiles/*') != '' && inputs.mage-targets != '' }}
-      uses: magefile/mage-action@v3
+      uses: magefile/mage-action@v4
       env:
         PLATFORMS: ${{ steps.platforms.outputs.commas }}
       with:
