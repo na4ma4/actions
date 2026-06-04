@@ -93,7 +93,7 @@ jobs:
 
     - name: Platforms comma to spaces
       id: platforms
-      uses: actions/github-script@v7
+      uses: actions/github-script@v9
       env:
         INPUT_PLATFORMS: "${{ inputs.platforms }}"
       with:
@@ -152,7 +152,7 @@ jobs:
 
     - name: Manual Tag Config
       id: manualmeta
-      uses: actions/github-script@v7
+      uses: actions/github-script@v9
       env:
         INPUT_FORCE_LATEST: "${{ inputs.force-latest }}"
         INPUT_SEMVER_TAG: "${{ inputs.semver-tag }}"
