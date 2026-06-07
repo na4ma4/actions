@@ -21,6 +21,16 @@ on:
       RELEASE_PLEASE_TOKEN:
         required: true
         description: "Token for release-please to create releases"
+    outputs:
+      release_created:
+        description: "Whether a release was created"
+        value: ${{ jobs.release-please.outputs.release_created }}
+      tag_name:
+        description: "The tag name of the created release"
+        value: ${{ jobs.release-please.outputs.tag_name }}
+      version:
+        description: "The version of the created release"
+        value: ${{ jobs.release-please.outputs.version }}
 
 permissions:
   contents: write
@@ -31,6 +41,10 @@ name: release-please
 
 env:
   PLATFORMS: ${{ inputs.platforms }}
+
+defaults:
+  run:
+    shell: bash --noprofile --norc -euo pipefail {0}
 
 jobs:
   release-please:
