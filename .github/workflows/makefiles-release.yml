@@ -37,7 +37,9 @@ jobs:
         if: ${{ inputs.language == 'golang' }}
         uses: actions/setup-go@v5
         with:
+
           go-version-file: 'go.mod'
+          cache: true
         id: go
 
       - name: Build project

@@ -74,8 +74,9 @@ jobs:
       if: ${{ hashFiles('go.mod') != '' }}
       uses: actions/setup-go@v6
       with:
-        go-version: stable
-        cache-dependency-path: "**/*.sum"
+
+        go-version-file: 'go.mod'
+        cache: true
       id: go
 
     - name: Set up go env
