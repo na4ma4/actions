@@ -13,7 +13,50 @@ permissions:
   contents: write
   pull-requests: write
 
+defaults:
+  run:
+    shell: bash --noprofile --norc -euo pipefail {0}
+
 jobs:
+  dependabot-tidy:
+    # Run only on PRs opened by dependabot
+    if: ${{ github.actor == 'dependabot[bot]' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          # Check out the PR branch directly to allow pushing back changes
+          ref: ${{ github.event.pull_request.head.ref }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+
+          go-version-file: 'go.work' # Scales dynamically with workspace toolchain
+          cache: true
+
+      - name: Sync and Tidy Workspace
+        run: |
+          # Sync go.work hashes and tidy sub-modules
+          go work sync
+
+      - name: Commit and Push Changes
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          
+          # Only stage changes to workspace-related files
+          git add go.work go.work.sum
+          
+          if ! git diff --cached --quiet; then
+            git commit -m "chore: sync go.work following dependabot updates"
+            git push
+          else
+            echo "No workspace synchronization needed."
+          fi
+
   dependabot:
     name: "Automatic merge for non-major semver changes"
     runs-on: ubuntu-latest
