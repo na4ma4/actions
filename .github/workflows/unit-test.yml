@@ -128,7 +128,7 @@ jobs:
 
     - name: Publish Unit Test Coverage
       if: ${{ inputs.enable-codecov }}
-      uses: codecov/codecov-action@v6
+      uses: codecov/codecov-action@v7
       with:
         fail_ci_if_error: false
         verbose: true
