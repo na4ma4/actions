@@ -24,7 +24,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           # Check out the PR branch directly to allow pushing back changes
           ref: ${{ github.event.pull_request.head.ref }}
