@@ -44,7 +44,7 @@ jobs:
     runs-on: ${{ inputs.runs-on }}
     steps:
     - name: Checkout
-      uses: actions/checkout@v6
+      uses: actions/checkout@v7
 
     # - name: Go Cache
     #   if: ${{ hashFiles('go.mod') != '' }}
@@ -66,7 +66,7 @@ jobs:
 
     - name: Set up Docker Buildx
       if: ${{ inputs.platforms != 'linux/amd64' }}
-      uses: docker/setup-buildx-action@v3
+      uses: docker/setup-buildx-action@v4
       with:
         platforms: ${{ inputs.platforms }}
 
@@ -128,7 +128,7 @@ jobs:
 
     - name: Publish Unit Test Coverage
       if: ${{ inputs.enable-codecov }}
-      uses: codecov/codecov-action@v6
+      uses: codecov/codecov-action@v7
       with:
         fail_ci_if_error: false
         verbose: true
