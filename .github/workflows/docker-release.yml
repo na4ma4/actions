@@ -86,7 +86,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout
-      uses: actions/checkout@v4
+      uses: actions/checkout@v7
       with:
         ref: ${{ inputs.ref }}
         fetch-depth: ${{ inputs.fetch-depth }}
@@ -104,7 +104,7 @@ jobs:
           
     - name: Set up Go
       if: ${{ hashFiles('go.mod') != '' }}
-      uses: actions/setup-go@v5
+      uses: actions/setup-go@v6
       with:
 
         go-version-file: 'go.mod'
@@ -123,7 +123,7 @@ jobs:
 
     - name: Set up Docker Buildx
       if: ${{ inputs.platforms != 'linux/amd64' }}
-      uses: docker/setup-buildx-action@v3
+      uses: docker/setup-buildx-action@v4
       with:
         platforms: ${{ inputs.platforms }}
 
@@ -223,7 +223,7 @@ jobs:
 
     - name: Docker meta
       id: meta
-      uses: docker/metadata-action@v5
+      uses: docker/metadata-action@v6
       with:
         context: workflow
         images: |
@@ -258,7 +258,7 @@ jobs:
     - name: Build and Push Docker image
       id: docker-push
       if: ${{ steps.meta.outputs.tags != '' }}
-      uses: docker/build-push-action@v6
+      uses: docker/build-push-action@v7
       with:
         context: ./
         file: ${{ inputs.dockerfile }}
