@@ -30,19 +30,21 @@ jobs:
           ref: ${{ github.event.pull_request.head.ref }}
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Set up Go
+      - name: Set up Go (go.work)
+        if: ${{ hashFiles('go.work') != '' }}
         uses: actions/setup-go@v6
         with:
-
           go-version-file: 'go.work' # Scales dynamically with workspace toolchain
           cache: true
 
       - name: Sync and Tidy Workspace
+        if: ${{ hashFiles('go.work') != '' }}
         run: |
           # Sync go.work hashes and tidy sub-modules
           go work sync
 
       - name: Commit and Push Changes
+        if: ${{ hashFiles('go.work') != '' }}
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
