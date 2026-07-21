@@ -32,7 +32,7 @@ jobs:
 
       - name: Set up Go (go.work)
         if: ${{ hashFiles('go.work') != '' }}
-        uses: actions/setup-go@v6
+        uses: actions/setup-go@v7
         with:
           go-version-file: 'go.work' # Scales dynamically with workspace toolchain
           cache: true
